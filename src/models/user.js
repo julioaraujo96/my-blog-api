@@ -12,6 +12,7 @@ const userSchema = new Schema({
     },
     email:{
         type:String,
+        unique:true,
         required:true,
         trim:true,
         lowercase:true,
@@ -43,9 +44,34 @@ const userSchema = new Schema({
     }
 });
 
+//findByCredentials will call userSchema.statics.findByCredentials 
+userSchema.statics.findByCredentials = async (email,password) => {
+
+    const user = await User.findOne({ email });  //findOne finds only one value where email:email 
+
+//no user = error
+    if(!user)
+    {
+        throw new Error('Unable to Login');
+    }
+
+    //compare hashed password to the user hashed password
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    //no match => error
+    if(!isMatch){
+        throw new Error('Unable to login');
+    }
+
+    return user;
+
+}
+
+
 //post if it's after an event, name of the event and function to run. no arrow function because they don't bind this.
 //next needs to be called to tell the process is over.
 
+//PLain text password hashing
 userSchema.pre('save', async function (next){
     
     const user = this;
