@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const Schema = mongoose.Schema;
 
@@ -41,11 +42,27 @@ const userSchema = new Schema({
                 throw new Error('Age must be a positive number');
             }
         }
-    }
+    },
+    tokens:[{
+        token:{
+            type:String,
+            required:true,
+        }
+    }]
 });
 
+userSchema.methods.generateAuthToken = async function(){
+
+    const user = this;
+
+    const token = jwt.sign({_id: user._id.toString()},'YmxvZ2d5YXBw')
+    user.tokens = user.tokens.concat({ token });
+    await user.save();
+    return token;
+}
+
 //findByCredentials will call userSchema.statics.findByCredentials 
-userSchema.statics.findByCredentials = async (email,password) => {
+userSchema.statics.findByCredentials = async (email,password) => { //statics are accessible on models || .methods is available on instances
 
     const user = await User.findOne({ email });  //findOne finds only one value where email:email 
 
