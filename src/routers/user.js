@@ -1,7 +1,7 @@
 const express = require('express')
 const User = require('../models/user')
-const router = new express.Router()
 const auth = require('../middleware/auth')
+const router = new express.Router()
 
 router.post('/users', async (req, res) => {
     const user = new User(req.body)
@@ -26,6 +26,30 @@ router.post('/users/login', async (req,res) => {
 
     } catch (e) {
         res.status(400).send()
+    }
+})
+
+router.post('/users/logout', auth, async (req,res) => {
+    try {
+        //filtrar pelos tokens excluindo o da sessão atual
+        req.user.tokens = req.user.tokens.filter(token => token.token !== req.token);
+        await req.user.save();
+
+        res.send();
+
+    } catch (e) {
+        res.status(500).send();
+    }
+})
+
+router.post('/users/logoutAll', auth, async (req,res) => {
+    try {
+        req.user.tokens = [];
+        await req.user.save();
+
+        req.send();
+    } catch (e) {
+        res.status(500).send(e);
     }
 })
 
